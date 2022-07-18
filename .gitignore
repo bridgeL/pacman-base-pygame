@@ -1,1 +1,8 @@
+/*/
+
+!/pacman
+!/res
+
+*.spec
+
 __pycache__

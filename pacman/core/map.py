@@ -1,11 +1,12 @@
-import json
-from pathlib import Path
+# import json
+# from pathlib import Path
 
+from res.map import lines
 
 class Map:
     def __init__(self) -> None:
-        with Path("res", "map.json").open("r", encoding="utf8") as f:
-            lines: list[str] = json.load(f)
+        # with Path("res", "map.json").open("r", encoding="utf8") as f:
+        #     lines: list[str] = json.load(f)
 
         self._map = [line.split() for line in lines]
         self.gap = 20

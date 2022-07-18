@@ -13,9 +13,10 @@ pygame.init()
 clock = Clock(100)
 
 # 初始化屏幕
-screen = pygame.display.set_mode((560, 700))
+screen = pygame.display.set_mode((560, 620))
 
 game = Game(screen)
+game.update()
 
 while True:
     for event in pygame.event.get():
@@ -32,3 +33,4 @@ while True:
 
     if clock.check():
         game.update()
+
