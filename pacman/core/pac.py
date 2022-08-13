@@ -14,9 +14,9 @@ class Pac(Mover):
     def is_power(self):
         return self.power > 0
 
-    @property
-    def step(self):
-        return 4 if self.is_power else 2
+    # @property
+    # def step(self):
+    #     return 4 if self.is_power else 2
 
     def eat(self, check):
         gap = self.map.gap
@@ -46,7 +46,7 @@ class Pac(Mover):
 
         if self.eat(self.map.is_power):
             self.score += 15
-            self.power = 500
+            self.power = 1000
 
         if self.power:
             self.power -= 1

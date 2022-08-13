@@ -11,6 +11,7 @@ class EnemyDrawer:
         self.screen = screen
         self.gap = gap
         self.astardrawer = AStarDrawer(enemy.astar, gap, screen)
+        self.e_astardrawer = AStarDrawer(enemy.e_astar, gap, screen)
 
     def draw(self, color):
         gap = self.gap
@@ -19,7 +20,10 @@ class EnemyDrawer:
         pygame.draw.circle(self.screen, color, pos, 7, 7)
 
     def draw_enemy(self):
-        self.astardrawer.draw_path()
+        if self.enemy.fear:
+            self.e_astardrawer.draw_path()
+        else:
+            self.astardrawer.draw_path()
 
         if self.enemy.dead:
             if self.enemy.revive >= 50:
@@ -43,5 +47,8 @@ class EnemyDrawer:
         self.draw(color)
 
     def clear_enemy(self):
-        self.astardrawer.clear_path()
+        if self.enemy.fear:
+            self.e_astardrawer.clear_path()
+        else:
+            self.astardrawer.clear_path()
         self.draw((0, 0, 0))

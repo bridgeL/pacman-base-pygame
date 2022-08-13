@@ -58,9 +58,9 @@ class Game:
         self.scoredrawer.clear_score()
         self.init()
 
-    def deal_event(self, event: pygame.event.Event):
-        unicode = event.unicode.lower()
-        scancode = event.scancode
+    def deal_keydown_event(self, unicode:str, scancode, **data):
+        unicode = unicode.lower()
+        scancode = scancode
 
         if unicode:
             dir_dict = {
@@ -76,8 +76,7 @@ class Game:
 
             if unicode == 'r':
                 self.restart()
-            elif unicode == 'p':
-                exit()
+
 
         else:
             dir_dict = {

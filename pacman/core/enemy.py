@@ -1,7 +1,7 @@
 from pacman.core.map import Map
 from pacman.core.mover import Mover
 from pacman.core.pac import Pac
-from pacman.core.astar import AStar
+from pacman.core.astar import AStar, EscapeAStar
 
 
 class Enemy(Mover):
@@ -11,6 +11,7 @@ class Enemy(Mover):
 
         # 初始化轨迹
         self.astar = AStar(map)
+        self.e_astar = EscapeAStar(map)
 
         # 在家中
         self.at_home = False
@@ -70,33 +71,35 @@ class Enemy(Mover):
         gap = self.map.gap
         begin = [int(x/gap) for x in self.pos]
         end = [int(x/gap) for x in self.pac.pos]
-        self.astar.find(begin, end)
 
+        self.astar.find(begin, end)
         dir = self.get_dir_from_path(self.astar.path)
         self.set_dir(dir)
 
     def escape(self):
         gap = self.map.gap
+        # begin = [int(x/gap) for x in self.pos]
+        # i, j = [int(x/gap) for x in self.pac.pos]
+        # end = [5 if i > 13 else 23, 6 if j > 13 else 21]
+
         begin = [int(x/gap) for x in self.pos]
-        i, j = p = [int(x/gap) for x in self.pac.pos]
-        end = [1 if i > 13 else 29, 1 if j > 13 else 26]
+        fear = [int(x/gap) for x in self.pac.pos]
 
-        self.astar.find(begin, end, [p])
-
-        dir = self.get_dir_from_path(self.astar.path)
+        self.e_astar.find(begin, fear, 10)
+        dir = self.get_dir_from_path(self.e_astar.path)
         self.set_dir(dir)
 
     def gohome(self):
         gap = self.map.gap
         begin = [int(x/gap) for x in self.pos]
         end = [15, 14]
+
         self.astar.find(begin, end)
-
-        path = self.astar.path
-        self.at_home = len(path) == 1
-
-        dir = self.get_dir_from_path(path)
+        dir = self.get_dir_from_path(self.astar.path)
         self.set_dir(dir)
+
+        self.at_home = len(self.astar.path) == 1
+
 
     def think(self):
         # 此处有bug，如果速度与剩余格子长度互质，则可能直到撞墙触发mover.close_to_wall之后才能改变策略
