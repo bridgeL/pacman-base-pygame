@@ -33,14 +33,12 @@ class Game:
 
         # 初始化角色
         pac = Pac(map)
-        pac.set_coord(2, 26)
-        # pac.set_coord(23, 13)
+        pac.set_coord(23, 13.5)
         pac_drawer = PacDrawer(pac, map.gap, self.screen)
 
         # 初始化敌人
         enemy = Enemy(map, pac)
-        enemy.set_coord(8, 21)
-        # enemy.set_coord(15, 14)
+        enemy.set_coord(15, 14)
         enemy_drawer = EnemyDrawer(pac, enemy, map.gap, self.screen)
 
         # 初始化astar绘制器
@@ -52,7 +50,7 @@ class Game:
         self.map = map
         self.pac = pac
         self.movers = [pac, enemy]
-        self.drawers = [map_drawer, pac_drawer, enemy_drawer, astar_drawer, score_drawer]
+        self.drawers = [map_drawer, astar_drawer, pac_drawer, enemy_drawer, score_drawer]
 
         self.pause = False
 

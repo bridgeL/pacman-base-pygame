@@ -24,12 +24,12 @@ class AStarDrawer(BaseDrawer):
             p1, p2 = line
             p1.reverse()
             p2.reverse()
-            pygame.draw.line(self.screen, color, p1, p2, 2)
+            pygame.draw.line(self.screen, color, p1, p2, 3)
 
     def draw(self):
         path = [n.pos for n in self.astar.close_list]
-        self.draw_color((255, 0, 255), path, self.gap/2+3)
-        self.draw_color((0, 255, 0), self.astar.path, self.gap/2-3)
+        self.draw_color((200, 0, 200), path, self.gap/2+3)
+        self.draw_color((0, 200, 0), self.astar.path, self.gap/2-3)
 
     def clear(self):
         path = [n.pos for n in self.astar.close_list]
