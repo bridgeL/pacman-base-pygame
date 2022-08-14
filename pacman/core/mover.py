@@ -1,38 +1,31 @@
-from math import ceil, floor
 from pacman.core.map import Map
 
 
 class Mover:
     def __init__(self, map: Map) -> None:
-        self.dir = 1
+        self.dir = 0
         self.next_dir = 0
         self.map = map
-
-        gap = self.map.gap
-        self.pos = [gap, gap]
-
-    @property
-    def step(self):
-        return 2
+        self.pos = self.map.coord2pos((1, 1))
+        self.step = 2
 
     def set_dir(self, dir: int):
-        # self.next_dir = dir
         self.next_dir = dir
 
-    def set_pos(self, i: int, j: int):
-        gap = self.map.gap
-        self.pos = [i*gap, j*gap]
+    def set_coord(self, i: float, j: float):
+        self.pos = self.map.coord2pos((i, j))
 
-    def get_next_pos(self, dir):
+    def get_next_pos(self, dir, step):
         next_pos = [x for x in self.pos]
+        # step = self.step
         if dir == 1:
-            next_pos[0] += self.step
+            next_pos[0] += step
         elif dir == -1:
-            next_pos[0] -= self.step
+            next_pos[0] -= step
         elif dir == 2:
-            next_pos[1] += self.step
+            next_pos[1] += step
         elif dir == -2:
-            next_pos[1] -= self.step
+            next_pos[1] -= step
 
         gap = self.map.gap
         h = (self.map.row-1)*gap
@@ -49,57 +42,73 @@ class Mover:
         next_pos[1] = limit(next_pos[1], w)
         return next_pos
 
-    def check_pos(self, pos):
-        """查看pos是否合法（跑到墙里、超出边界、脱轨"""
-        gap = self.map.gap
+    def get_next_coord(self, dir):
+        coord = self.map.pos2coord(self.pos)
+        if self.on_cross():
+            if dir == 1:
+                coord[0] += 1
+            elif dir == -1:
+                coord[0] -= 1
+            elif dir == 2:
+                coord[1] += 1
+            elif dir == -2:
+                coord[1] -= 1
+        else:
+            if dir == 1:
+                coord[0] += 1
+            elif dir == 2:
+                coord[1] += 1
 
-        i, j = [x / gap for x in pos]
+        row = self.map.row
+        col = self.map.col
 
-        # 脱轨
-        if all(x % gap != 0 for x in pos):
-            return False
+        def limit(x, x_max):
+            if x < 0:
+                x += x_max
+            elif x >= x_max:
+                x -= x_max
+            return x
 
-        if self.map.is_wall(floor(i), floor(j)) or self.map.is_wall(ceil(i), ceil(j)):
-            return False
-        return True
+        coord[0] = limit(coord[0], row)
+        coord[1] = limit(coord[1], col)
+
+        return coord
 
     def on_cross(self):
         gap = self.map.gap
         return all(x % gap == 0 for x in self.pos)
 
-    def update_dir(self):
+    def move(self):
+        # 赋初值 或 掉头
         if self.dir == 0 or self.dir == -self.next_dir:
             self.dir = self.next_dir
+
+        if not self.dir:
             return
 
-        # 由于这里的设计，吃豆人地图必须设计为单宽度的路径
-        if self.on_cross():
-            pos = self.get_next_pos(self.next_dir)
-            if self.check_pos(pos):
-                self.dir = self.next_dir
+        left = self.step
+
+        # 先移动到路口
+        if not self.on_cross():
+            # 下一个路口
+            coord = self.get_next_coord(self.dir)
+            gap = self.map.gap
+            pos = [i*gap for i in coord]
+            dist = sum(abs(x-y) for x,y in zip(pos, self.pos))
+            step = min(dist, self.step)
+            left -= step
+            self.pos = self.get_next_pos(self.dir, step)
+            if not left:
                 return
 
-    def close_to_wall(self, pos):
-        """如果维持原速前进会越界，则尽可能在接近墙的位置停下"""
-        gap = self.map.gap
+        # 尝试转弯
+        if self.dir != self.next_dir:
+            coord = self.get_next_coord(self.next_dir)
+            if not self.map.is_wall(*coord):
+                self.dir = self.next_dir
 
-        i, j = [x / gap for x in pos]
-        if self.map.is_wall(floor(i), floor(j)):
-            if self.dir < 0:
-                pos = [ceil(i)*gap, ceil(j)*gap]
-
-        if self.map.is_wall(ceil(i), ceil(j)):
-            if self.dir > 0:
-                pos = [floor(i)*gap, floor(j)*gap]
-
-        return pos
-
-    def update_pos(self):
-        pos = self.get_next_pos(self.dir)
-        self.pos = pos if self.check_pos(pos) else self.close_to_wall(pos)
-
-    def get_coord(self):
-        # 将自身的位置转换为坐标
-        return self.map.pos2coord(self.pos)
+        coord = self.get_next_coord(self.dir)
+        if not self.map.is_wall(*coord):
+            self.pos = self.get_next_pos(self.dir, left)
 
     def update(self): ...

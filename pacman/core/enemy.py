@@ -1,4 +1,3 @@
-from time import time
 from pacman.core.map import Map
 from pacman.core.mover import Mover
 from pacman.core.pac import Pac
@@ -19,6 +18,9 @@ class Enemy(Mover):
         # 复活计数器
         self.revive = 0
 
+        # 思考计数器
+        self.think = 0
+
     @property
     def dead(self):
         return self.revive > 0
@@ -26,11 +28,6 @@ class Enemy(Mover):
     @property
     def fear(self):
         return self.pac.power > 0
-
-    @property
-    def step(self):
-        return 1
-        # return 1 if self.dead or self.fear else 2
 
     def eat(self):
         gap = self.map.gap
@@ -41,13 +38,13 @@ class Enemy(Mover):
             else:
                 self.pac.fight(False)
 
-    def get_dir_from_path(self, path):
-        gap = self.map.gap
-        _p = [x/gap for x in self.pos]
-        p = [x/gap for x in self.pac.pos]
 
+    def get_dir(self, coord:tuple):
         # 烂代码
         # 专门为穿越追踪做的烂代码
+        _p = self.map.pos2coord(self.pos)
+        p = self.map.pos2coord(self.pac.pos)
+
         if _p[0] == 14 and p[0] == 14:
             if (_p[1] <= 5 and p[1] >= 21):
                 return -2
@@ -55,72 +52,62 @@ class Enemy(Mover):
             if (p[1] <= 5 and _p[1] >= 21):
                 return 2
 
+        # 根据上次思考的路径行动
+        path = self.astar.path
         for i, p in enumerate(path):
-            if all(i == j for i, j in zip(_p, p)):
+            if p[0] == coord[0] and p[1] == coord[1]:
                 path = path[i:]
-
+                break
+        path = path[:2]
         if len(path) < 2:
-            return self.dir
-
-        d = [j-i for i, j in zip(*path[:2])]
+            path = [path[0], path[0]]
+        d = [j-i for i, j in zip(*path)]
         if d[0] != 0:
             return d[0]
         return d[1]*2
 
+
     def chase(self):
         """可以自行重载，编写不同的追逐逻辑"""
-        gap = self.map.gap
-        begin = [x//gap for x in self.pos]
-        end = [x//gap for x in self.pac.pos]
+        begin = self.map.pos2coord(self.pos)
+        end = self.map.pos2coord(self.pac.pos)
+        self.astar.calc_chase_path(begin, end)
 
-        self.astar.calc_chase_path(begin, end, 100)
-        dir = self.get_dir_from_path(self.astar.path)
-        self.set_dir(dir)
 
     def escape(self):
-        gap = self.map.gap
-        begin = [x//gap for x in self.pos]
-        fear = [x//gap for x in self.pac.pos]
-
-        self.astar.calc_escape_path(begin, fear, 10)
-        dir = self.get_dir_from_path(self.astar.path)
-        self.set_dir(dir)
+        begin = self.map.pos2coord(self.pos)
+        fear = self.map.pos2coord(self.pac.pos)
+        self.astar.calc_escape_path(begin, fear)
 
     def gohome(self):
-        gap = self.map.gap
-        begin = [x//gap for x in self.pos]
+        begin = self.map.pos2coord(self.pos)
         end = [15, 14]
-
-        self.astar.calc_chase_path(begin, end, 100)
-        dir = self.get_dir_from_path(self.astar.path)
-        self.set_dir(dir)
-
+        self.astar.calc_chase_path(begin, end)
         self.at_home = len(self.astar.path) == 1
 
-    def think(self):
-        # 此处有bug，如果速度与剩余格子长度互质，则可能直到撞墙触发mover.close_to_wall之后才能改变策略
-        # 但若不加此限制，则思考频率过快，大量冗余思考影响游戏运行速度，帧率下降到不可忍受
-        # 一种解决方法是，令其运动速度始终与格子不互质
-        print("fuck", time())
-
-        # 三种移动策略
-        if self.dead:
-            self.gohome()
-        elif self.fear:
-            self.escape()
-        else:
-            self.chase()
-
     def update(self):
-        if self.on_cross():
-            self.think()
+        if self.think:
+            self.think -= 1
+        else:
+            self.think = 20
+            # 三种移动策略
+            if self.dead:
+                self.gohome()
+            elif self.fear:
+                self.escape()
+            else:
+                self.chase()
+
+        coord = self.map.pos2coord(self.pos)
+        dir = self.get_dir(coord)
+        self.set_dir(dir)
 
         # 复活计数器
         if self.dead and self.at_home:
             if self.revive:
                 self.revive -= 1
 
-        self.update_dir()
-        self.update_pos()
+        self.move()
+
         if not self.dead:
             self.eat()

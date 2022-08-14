@@ -14,11 +14,6 @@ class Pac(Mover):
     def is_power(self):
         return self.power > 0
 
-    @property
-    def step(self):
-        return 2
-        # return 4 if self.is_power else 2
-
     def eat(self, check):
         gap = self.map.gap
         i, j = [x / gap for x in self.pos]
@@ -40,8 +35,7 @@ class Pac(Mover):
         if self.dead:
             return
 
-        self.update_dir()
-        self.update_pos()
+        self.move()
 
         if self.eat(self.map.is_bean):
             self.score += 1

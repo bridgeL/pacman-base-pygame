@@ -23,6 +23,7 @@ class Game:
         self.pac: Pac
         self.drawers: List[BaseDrawer] = []
         self.movers: List[Mover] = []
+        self.pause = False
         self.init()
 
     def init(self):
@@ -32,15 +33,15 @@ class Game:
 
         # 初始化角色
         pac = Pac(map)
-        pac.set_pos(2, 26)
-        # pac.set_pos(23, 13)
+        pac.set_coord(2, 26)
+        # pac.set_coord(23, 13)
         pac_drawer = PacDrawer(pac, map.gap, self.screen)
 
         # 初始化敌人
         enemy = Enemy(map, pac)
-        enemy.set_pos(8, 21)
-        # enemy.set_pos(15, 14)
-        enemy_drawer = EnemyDrawer(pac, enemy, map.gap // 2, self.screen)
+        enemy.set_coord(8, 21)
+        # enemy.set_coord(15, 14)
+        enemy_drawer = EnemyDrawer(pac, enemy, map.gap, self.screen)
 
         # 初始化astar绘制器
         astar_drawer = AStarDrawer(enemy.astar, map.gap, self.screen)
@@ -53,15 +54,18 @@ class Game:
         self.movers = [pac, enemy]
         self.drawers = [map_drawer, pac_drawer, enemy_drawer, astar_drawer, score_drawer]
 
+        self.pause = False
+
     def update(self):
-        for drawer in self.drawers:
-            drawer.clear()
+        if not self.pause:
+            for drawer in self.drawers:
+                drawer.clear()
 
-        for mover in self.movers:
-            mover.update()
+            for mover in self.movers:
+                mover.update()
 
-        for drawer in self.drawers:
-            drawer.draw()
+            for drawer in self.drawers:
+                drawer.draw()
 
     def restart(self):
         for drawer in self.drawers:
@@ -82,6 +86,14 @@ class Game:
             gap = self.map.gap
             coord = [(x - gap/2) / gap for x in reversed(pos)]
             print(coord)
+        elif button == 3:
+            self.pac.power = 1000000 if not self.pac.power else 0
+        else:
+            gap = self.map.gap
+            i, j = [(x - gap/2) / gap for x in reversed(pos)]
+            self.pac.dir = 0
+            self.pac.next_dir = 0
+            self.pac.set_coord(int(i), int(j))
 
     def handle_keydown(self, unicode: str, scancode: int, **data):
         unicode = unicode.lower()
@@ -89,6 +101,11 @@ class Game:
 
         if unicode == 'r':
             self.restart()
+        if unicode == ' ':
+            self.pause = not self.pause
+        if unicode in [s for s in "1234567"]:
+            for mover in self.movers:
+                mover.step = int(unicode)
 
         dir_dict = {
             "w": -1,

@@ -14,7 +14,8 @@ class PacDrawer(BaseDrawer):
 
     def draw_color(self, color):
         gap = self.gap
-        pos = [x + gap/2 for x in self.pac.pos]
+        base = gap / 2
+        pos = [x + base for x in self.pac.pos]
         pos.reverse()
         pygame.draw.circle(self.screen, color, pos, 7, 7)
 
@@ -26,7 +27,7 @@ class PacDrawer(BaseDrawer):
         # 牛了
         if self.pac.is_power:
             # 快结束时，闪烁提示
-            if self.pac.power >= 50 or (self.pac.power // 10) % 2:
+            if self.pac.power >= 50 or int(self.pac.power / 10) % 2:
                 return self.power_color
 
         # 正常了

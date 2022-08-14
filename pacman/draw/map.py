@@ -12,6 +12,7 @@ class MapDrawer(BaseDrawer):
         m = self.map.row
         n = self.map.col
         gap = self.map.gap
+        base = gap / 2
 
         # 生成墙体线
         lines = []
@@ -44,7 +45,7 @@ class MapDrawer(BaseDrawer):
 
         # 画墙
         for line in lines:
-            line = [[i*gap + gap/2 for i in p] for p in line]
+            line = [[i*gap + base for i in p] for p in line]
             p1, p2 = line
             p1.reverse()
             p2.reverse()
@@ -54,6 +55,7 @@ class MapDrawer(BaseDrawer):
         m = self.map.row
         n = self.map.col
         gap = self.map.gap
+        base = gap / 2
 
         ps = []
         for i in range(m):
@@ -63,7 +65,7 @@ class MapDrawer(BaseDrawer):
                     ps.append(p)
 
         for p in ps:
-            p = [i*gap + gap/2 for i in p]
+            p = [i*gap + base for i in p]
             p.reverse()
             pygame.draw.circle(self.screen, (255, 255, 255), p, 2, 2)
 
@@ -71,6 +73,7 @@ class MapDrawer(BaseDrawer):
         m = self.map.row
         n = self.map.col
         gap = self.map.gap
+        base = gap / 2
 
         ps = []
         for i in range(m):
@@ -80,7 +83,7 @@ class MapDrawer(BaseDrawer):
                     ps.append(p)
 
         for p in ps:
-            p = [i*gap + gap/2 for i in p]
+            p = [i*gap + base for i in p]
             p.reverse()
             pygame.draw.circle(self.screen, (255, 0, 0), p, 7, 7)
 

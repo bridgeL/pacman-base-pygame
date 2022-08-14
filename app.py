@@ -1,7 +1,6 @@
 import asyncio
 import os
 import time
-from typing import List
 import pygame
 from pacman.game import Game
 
@@ -39,9 +38,7 @@ if __name__ == "__main__":
     pygame.init()
     screen = pygame.display.set_mode((560, 620))
     game = Game(screen)
-    print("11")
     game.update()
-    print("121")
 
     asyncio.run(game_loop(150))
 
