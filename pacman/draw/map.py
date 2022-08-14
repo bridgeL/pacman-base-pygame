@@ -1,15 +1,16 @@
 import pygame
 from pacman.core.map import Map
+from pacman.draw.drawer import BaseDrawer
 
 
-class MapDrawer:
+class MapDrawer(BaseDrawer):
     def __init__(self, map: Map, screen: pygame.Surface) -> None:
         self.map = map
         self.screen = screen
 
     def draw_wall(self):
-        m = len(self.map._map)
-        n = len(self.map._map[0])
+        m = self.map.row
+        n = self.map.col
         gap = self.map.gap
 
         # 生成墙体线
@@ -50,8 +51,8 @@ class MapDrawer:
             pygame.draw.line(self.screen, (0, 0, 255), p1, p2, 5)
 
     def draw_bean(self):
-        m = len(self.map._map)
-        n = len(self.map._map[0])
+        m = self.map.row
+        n = self.map.col
         gap = self.map.gap
 
         ps = []
@@ -67,8 +68,8 @@ class MapDrawer:
             pygame.draw.circle(self.screen, (255, 255, 255), p, 2, 2)
 
     def draw_power(self):
-        m = len(self.map._map)
-        n = len(self.map._map[0])
+        m = self.map.row
+        n = self.map.col
         gap = self.map.gap
 
         ps = []
@@ -82,3 +83,16 @@ class MapDrawer:
             p = [i*gap + gap/2 for i in p]
             p.reverse()
             pygame.draw.circle(self.screen, (255, 0, 0), p, 7, 7)
+
+    def draw(self):
+        # 这里可以考虑进一步优化，比如：
+        # 1. 墙体仅在第一次绘制地图时绘制
+        # 2. 豆子仅绘制曾被mover覆盖的部分豆子
+        self.draw_wall()
+        self.draw_bean()
+        self.draw_power()
+
+    def clear(self):
+        # nothing to do
+        # 被吃掉的豆子一定会被pacman身体自动抹掉，因此无需清除
+        pass

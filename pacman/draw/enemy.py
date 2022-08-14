@@ -1,54 +1,45 @@
 import pygame
 from pacman.core.pac import Pac
 from pacman.core.enemy import Enemy
-from pacman.draw.astar import AStarDrawer
+from pacman.draw.drawer import BaseDrawer
 
 
-class EnemyDrawer:
-    def __init__(self, pac: Pac, enemy: Enemy, gap: int, screen: pygame.Surface) -> None:
+class EnemyDrawer(BaseDrawer):
+    def __init__(self, pac: Pac, enemy: Enemy, base: int, screen: pygame.Surface) -> None:
         self.pac = pac
         self.enemy = enemy
         self.screen = screen
-        self.gap = gap
-        self.astardrawer = AStarDrawer(enemy.astar, gap, screen)
-        self.e_astardrawer = AStarDrawer(enemy.e_astar, gap, screen)
+        self.base = base
+        self.dead_color = (255, 255, 255)
+        self.fear_color = (0, 0, 255)
+        self.color = (255, 0, 255)
 
-    def draw(self, color):
-        gap = self.gap
-        pos = [x + gap/2 for x in self.enemy.pos]
+    def draw_color(self, color):
+        pos = [x + self.base for x in self.enemy.pos]
         pos.reverse()
         pygame.draw.circle(self.screen, color, pos, 7, 7)
 
-    def draw_enemy(self):
-        if self.enemy.fear:
-            self.e_astardrawer.draw_path()
-        else:
-            self.astardrawer.draw_path()
-
+    def get_color(self):
+        # 死亡，回家中
         if self.enemy.dead:
-            if self.enemy.revive >= 50:
-                color = (255, 255, 255)
-            # 快结束时，闪烁提示
-            elif int(self.enemy.revive / 10) % 2:
-                color = (255, 255, 255)
-            else:
-                color = (0, 0, 255)
-        elif self.enemy.fear:
-            # 快结束时，闪烁提示
-            if self.pac.power >= 50:
-                color = (0, 0, 255)
-            elif int(self.pac.power / 10) % 2:
-                color = (255, 0, 255)
-            else:
-                color = (0, 0, 255)
-        else:
-            color = (255, 0, 255)
+            # 快复活时，闪烁提示
+            if self.enemy.revive >= 50 or (self.enemy.revive // 10) % 2:
+                return self.dead_color
+            return self.fear_color
 
-        self.draw(color)
-
-    def clear_enemy(self):
+        # 逃跑
         if self.enemy.fear:
-            self.e_astardrawer.clear_path()
-        else:
-            self.astardrawer.clear_path()
-        self.draw((0, 0, 0))
+            # 快结束时，闪烁提示
+            if self.pac.power >= 50 or (self.pac.power // 10) % 2:
+                return self.fear_color
+            return self.color
+
+        # 常规
+        return self.color
+
+    def draw(self):
+        color = self.get_color()
+        self.draw_color(color)
+
+    def clear(self):
+        self.draw_color((0, 0, 0))

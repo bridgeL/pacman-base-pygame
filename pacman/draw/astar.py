@@ -1,14 +1,15 @@
 import pygame
-from pacman.core.astar import AStar
+from pacman.core.astar import Astar
+from pacman.draw.drawer import BaseDrawer
 
 
-class AStarDrawer:
-    def __init__(self, astar: AStar, gap: int, screen: pygame.Surface) -> None:
+class AStarDrawer(BaseDrawer):
+    def __init__(self, astar: Astar, gap: int, screen: pygame.Surface) -> None:
         self.astar = astar
         self.screen = screen
         self.gap = gap
 
-    def draw(self, color):
+    def draw_color(self, color):
         # 生成轨迹线
         gap = self.gap
         path = self.astar.path
@@ -26,8 +27,8 @@ class AStarDrawer:
             p2.reverse()
             pygame.draw.line(self.screen, color, p1, p2, 5)
 
-    def draw_path(self):
-        self.draw((0, 255, 0))
+    def draw(self):
+        self.draw_color((0, 255, 0))
 
-    def clear_path(self):
-        self.draw((0, 0, 0))
+    def clear(self):
+        self.draw_color((0, 0, 0))

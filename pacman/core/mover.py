@@ -16,6 +16,7 @@ class Mover:
         return 2
 
     def set_dir(self, dir: int):
+        # self.next_dir = dir
         self.next_dir = dir
 
     def set_pos(self, i: int, j: int):
@@ -23,31 +24,30 @@ class Mover:
         self.pos = [i*gap, j*gap]
 
     def get_next_pos(self, dir):
-        pos = [i for i in self.pos]
+        next_pos = [x for x in self.pos]
         if dir == 1:
-            pos[0] += self.step
+            next_pos[0] += self.step
         elif dir == -1:
-            pos[0] -= self.step
+            next_pos[0] -= self.step
         elif dir == 2:
-            pos[1] += self.step
+            next_pos[1] += self.step
         elif dir == -2:
-            pos[1] -= self.step
+            next_pos[1] -= self.step
 
-        m = len(self.map._map)
-        n = len(self.map._map[0])
         gap = self.map.gap
+        h = (self.map.row-1)*gap
+        w = (self.map.col-1)*gap
 
-        size = [m, n]
-        size = [(i-1)*gap for i in size]
-
-        def over(x, s):
+        def limit(x, x_max):
             if x < 0:
-                return x+s
-            if x >= s:
-                return x-s
+                x += x_max
+            elif x >= x_max:
+                x -= x_max
             return x
 
-        return [over(x, s) for x, s in zip(pos, size)]
+        next_pos[0] = limit(next_pos[0], h)
+        next_pos[1] = limit(next_pos[1], w)
+        return next_pos
 
     def check_pos(self, pos):
         """查看pos是否合法（跑到墙里、超出边界、脱轨"""
@@ -98,7 +98,8 @@ class Mover:
         pos = self.get_next_pos(self.dir)
         self.pos = pos if self.check_pos(pos) else self.close_to_wall(pos)
 
-    def update_move(self):
-        """推荐帧率100"""
-        self.update_dir()
-        self.update_pos()
+    def get_coord(self):
+        # 将自身的位置转换为坐标
+        return self.map.pos2coord(self.pos)
+
+    def update(self): ...

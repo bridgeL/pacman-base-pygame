@@ -1,89 +1,112 @@
-import pygame
+from typing import List
+from pygame.constants import QUIT, KEYDOWN, MOUSEBUTTONDOWN
+from pygame.event import Event
+from pygame.surface import Surface
+
 from pacman.core.map import Map
 from pacman.core.pac import Pac
 from pacman.core.enemy import Enemy
+from pacman.core.mover import Mover
 
 from pacman.draw.map import MapDrawer
 from pacman.draw.pac import PacDrawer
+from pacman.draw.astar import AStarDrawer
 from pacman.draw.enemy import EnemyDrawer
 from pacman.draw.score import ScoreDrawer
+from pacman.draw.drawer import BaseDrawer
 
 
 class Game:
-    def __init__(self, screen: pygame.Surface) -> None:
+    def __init__(self, screen: Surface) -> None:
         self.screen = screen
+        self.map: Map
+        self.pac: Pac
+        self.drawers: List[BaseDrawer] = []
+        self.movers: List[Mover] = []
         self.init()
 
     def init(self):
         # 初始化地图
-        self.map = Map()
-        self.mapdrawer = MapDrawer(self.map, self.screen)
+        map = Map()
+        map_drawer = MapDrawer(map, self.screen)
 
         # 初始化角色
-        self.pac = Pac(self.map)
-        self.pac.set_pos(23, 13)
-        self.pacdrawer = PacDrawer(self.pac, self.map.gap, self.screen)
+        pac = Pac(map)
+        pac.set_pos(2, 26)
+        # pac.set_pos(23, 13)
+        pac_drawer = PacDrawer(pac, map.gap, self.screen)
 
         # 初始化敌人
-        self.enemy = Enemy(self.map, self.pac)
-        self.enemy.set_pos(15, 14)
-        self.enemydrawer = EnemyDrawer(
-            self.pac, self.enemy, self.map.gap, self.screen)
+        enemy = Enemy(map, pac)
+        enemy.set_pos(8, 21)
+        # enemy.set_pos(15, 14)
+        enemy_drawer = EnemyDrawer(pac, enemy, map.gap // 2, self.screen)
+
+        # 初始化astar绘制器
+        astar_drawer = AStarDrawer(enemy.astar, map.gap, self.screen)
 
         # 初始化分数绘制器
-        self.scoredrawer = ScoreDrawer(self.pac, self.map.gap, self.screen)
+        score_drawer = ScoreDrawer(pac, map.gap, self.screen)
 
-        # 首次绘制墙体
-        self.mapdrawer.draw_wall()
+        self.map = map
+        self.pac = pac
+        self.movers = [pac, enemy]
+        self.drawers = [map_drawer, pac_drawer, enemy_drawer, astar_drawer, score_drawer]
 
     def update(self):
-        self.pacdrawer.clear_pac()
-        self.enemydrawer.clear_enemy()
-        self.scoredrawer.clear_score()
+        for drawer in self.drawers:
+            drawer.clear()
 
-        self.pac.update()
-        self.enemy.update()
+        for mover in self.movers:
+            mover.update()
 
-        self.mapdrawer.draw_bean()
-        self.mapdrawer.draw_power()
-        self.scoredrawer.draw_score()
-        self.enemydrawer.draw_enemy()
-        self.pacdrawer.draw_pac()
-
-        pygame.display.flip()
+        for drawer in self.drawers:
+            drawer.draw()
 
     def restart(self):
-        self.pacdrawer.clear_pac()
-        self.enemydrawer.clear_enemy()
-        self.scoredrawer.clear_score()
+        for drawer in self.drawers:
+            drawer.clear()
         self.init()
 
-    def deal_keydown_event(self, unicode:str, scancode, **data):
+    def handle_events(self, events: List[Event]):
+        for event in events:
+            if event.type == QUIT:
+                return -1
+            elif event.type == KEYDOWN:
+                self.handle_keydown(**event.dict)
+            elif event.type == MOUSEBUTTONDOWN:
+                self.handle_mousedown(**event.dict)
+
+    def handle_mousedown(self, button: int, pos: tuple, **data):
+        if button == 1:
+            gap = self.map.gap
+            coord = [(x - gap/2) / gap for x in reversed(pos)]
+            print(coord)
+
+    def handle_keydown(self, unicode: str, scancode: int, **data):
         unicode = unicode.lower()
         scancode = scancode
 
-        if unicode:
-            dir_dict = {
-                "wi": -1,
-                "sk": 1,
-                "aj": -2,
-                "dl": 2
-            }
-            for key, val in dir_dict.items():
-                if unicode in key:
-                    self.pac.set_dir(val)
-                    return
+        if unicode == 'r':
+            self.restart()
 
-            if unicode == 'r':
-                self.restart()
+        dir_dict = {
+            "w": -1,
+            "s": 1,
+            "a": -2,
+            "d": 2,
+            "i": -1,
+            "k": 1,
+            "j": -2,
+            "l": 2,
+            82: -1,
+            81: 1,
+            80: -2,
+            79: 2
+        }
 
+        if unicode in dir_dict:
+            self.pac.set_dir(dir_dict[unicode])
 
-        else:
-            dir_dict = {
-                82: -1,
-                81: 1,
-                80: -2,
-                79: 2
-            }
-            if scancode in dir_dict:
-                self.pac.set_dir(dir_dict[scancode])
+        if scancode in dir_dict:
+            self.pac.set_dir(dir_dict[scancode])

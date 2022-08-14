@@ -1,7 +1,8 @@
+from time import time
 from pacman.core.map import Map
 from pacman.core.mover import Mover
 from pacman.core.pac import Pac
-from pacman.core.astar import AStar, EscapeAStar
+from pacman.core.astar import Astar
 
 
 class Enemy(Mover):
@@ -10,8 +11,7 @@ class Enemy(Mover):
         self.pac = pac
 
         # 初始化轨迹
-        self.astar = AStar(map)
-        self.e_astar = EscapeAStar(map)
+        self.astar = Astar(map)
 
         # 在家中
         self.at_home = False
@@ -29,7 +29,8 @@ class Enemy(Mover):
 
     @property
     def step(self):
-        return 1 if self.dead or self.fear else 2
+        return 1
+        # return 1 if self.dead or self.fear else 2
 
     def eat(self):
         gap = self.map.gap
@@ -69,59 +70,57 @@ class Enemy(Mover):
     def chase(self):
         """可以自行重载，编写不同的追逐逻辑"""
         gap = self.map.gap
-        begin = [int(x/gap) for x in self.pos]
-        end = [int(x/gap) for x in self.pac.pos]
+        begin = [x//gap for x in self.pos]
+        end = [x//gap for x in self.pac.pos]
 
-        self.astar.find(begin, end)
+        self.astar.calc_chase_path(begin, end, 100)
         dir = self.get_dir_from_path(self.astar.path)
         self.set_dir(dir)
 
     def escape(self):
         gap = self.map.gap
-        # begin = [int(x/gap) for x in self.pos]
-        # i, j = [int(x/gap) for x in self.pac.pos]
-        # end = [5 if i > 13 else 23, 6 if j > 13 else 21]
+        begin = [x//gap for x in self.pos]
+        fear = [x//gap for x in self.pac.pos]
 
-        begin = [int(x/gap) for x in self.pos]
-        fear = [int(x/gap) for x in self.pac.pos]
-
-        self.e_astar.find(begin, fear, 10)
-        dir = self.get_dir_from_path(self.e_astar.path)
+        self.astar.calc_escape_path(begin, fear, 10)
+        dir = self.get_dir_from_path(self.astar.path)
         self.set_dir(dir)
 
     def gohome(self):
         gap = self.map.gap
-        begin = [int(x/gap) for x in self.pos]
+        begin = [x//gap for x in self.pos]
         end = [15, 14]
 
-        self.astar.find(begin, end)
+        self.astar.calc_chase_path(begin, end, 100)
         dir = self.get_dir_from_path(self.astar.path)
         self.set_dir(dir)
 
         self.at_home = len(self.astar.path) == 1
 
-
     def think(self):
         # 此处有bug，如果速度与剩余格子长度互质，则可能直到撞墙触发mover.close_to_wall之后才能改变策略
         # 但若不加此限制，则思考频率过快，大量冗余思考影响游戏运行速度，帧率下降到不可忍受
         # 一种解决方法是，令其运动速度始终与格子不互质
-        if self.on_cross():
-            # 三种移动策略
-            if self.dead:
-                self.gohome()
-            elif self.fear:
-                self.escape()
-            else:
-                self.chase()
+        print("fuck", time())
+
+        # 三种移动策略
+        if self.dead:
+            self.gohome()
+        elif self.fear:
+            self.escape()
+        else:
+            self.chase()
 
     def update(self):
-        self.think()
+        if self.on_cross():
+            self.think()
 
         # 复活计数器
         if self.dead and self.at_home:
             if self.revive:
                 self.revive -= 1
 
-        self.update_move()
+        self.update_dir()
+        self.update_pos()
         if not self.dead:
             self.eat()
